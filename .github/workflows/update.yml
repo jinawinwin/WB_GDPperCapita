@@ -35,5 +35,6 @@ jobs:
             echo "No data changes."
           else
             git commit -m "data: update World Bank GDP per capita indicators"
+            git pull --rebase origin main
             git push
           fi
