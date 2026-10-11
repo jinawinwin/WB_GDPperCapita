@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Bank | GDP per Capita Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{--navy:#102b46;--blue:#2764a5;--sky:#eaf3fb;--ink:#1e293b;--muted:#64748b;--line:#dbe3ec;--bg:#f4f7fb;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}header{background:linear-gradient(120deg,#102b46,#205a8b);color:#fff;padding:28px max(22px,calc((100% - 1440px)/2)) 25px}header .eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;opacity:.8}h1{margin:5px 0;font-size:clamp(24px,3vw,36px)}header p{margin:6px 0 0;max-width:850px;color:#d9e7f5}.wrap{max-width:1440px;margin:auto;padding:22px}.toolbar,.panel,.stat{background:#fff;border:1px solid var(--line);border-radius:14px}.toolbar{padding:16px;display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:16px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:12px;color:var(--muted);font-weight:700}select,button{font:inherit;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;background:#fff;color:var(--ink)}button{cursor:pointer;font-weight:650}button.primary{background:var(--blue);color:white;border-color:var(--blue)}button:disabled{opacity:.55;cursor:wait}.status{margin-left:auto;color:var(--muted);font-size:12px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.tab{border-radius:999px;padding:8px 13px;font-size:13px}.tab.active{background:var(--navy);color:white;border-color:var(--navy)}.cluster-note{margin:-2px 0 16px;color:var(--muted);font-size:13px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.stat{padding:16px}.stat .label{font-size:12px;color:var(--muted);font-weight:700}.stat .value{font-size:clamp(20px,2vw,28px);font-weight:750;margin-top:4px;overflow-wrap:anywhere}.stat .sub{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(320px,1fr);gap:16px;margin-bottom:16px}.panel{padding:18px;min-width:0}.panel h2{font-size:17px;margin:0 0 5px}.desc{font-size:12px;color:var(--muted);margin:0 0 14px}.chartbox{position:relative;height:350px}.tablewrap{overflow:auto;max-height:520px}table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}th,td{padding:10px 11px;text-align:right;border-bottom:1px solid #e8edf3}th{position:sticky;top:0;background:#f0f5fa;color:#42546a;font-size:12px;z-index:1}th:first-child,td:first-child{text-align:left}tbody tr:hover{background:#f7fafc}.positive{color:#147d50}.negative{color:#b42318}.foot{color:var(--muted);font-size:12px;margin:16px 0 28px}.sourcegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.source{border:1px solid var(--line);border-radius:10px;padding:12px}.source a{color:var(--blue);font-weight:700;text-decoration:none}.source p{margin:5px 0 0;font-size:12px;color:var(--muted)}.empty{padding:28px;text-align:center;color:var(--muted)}@media(max-width:850px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.sourcegrid{grid-template-columns:1fr 1fr}.status{width:100%;margin:0}}@media(max-width:520px){.wrap{padding:12px}.stats{gap:8px}.stat{padding:12px}.panel{padding:13px}.chartbox{height:290px}.sourcegrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="eyebrow">World Development Indicators · World Bank</div><h1>GDP per Capita Dashboard</h1><p>국가별 1인당 GDP의 장기 추세와 실질 성장률을 비교합니다. 실질 지표와 명목 지표를 구분해 해석하세요.</p></header>
+<main class="wrap">
+<section class="toolbar">
+<div class="field"><label for="year">비교 기준 연도</label><select id="year"></select></div>
+<div class="field"><label for="metric">시계열 지표</label><select id="metric"><option value="real">실질 1인당 GDP (2015년 불변 US$)</option><option value="growth">실질 1인당 GDP 성장률 (%)</option><option value="nominal">명목 1인당 GDP (현재 US$)</option></select></div>
+<div class="field"><label for="start">차트 시작 연도</label><select id="start"><option>1990</option><option>2000</option><option>2005</option><option>2010</option><option>2015</option></select></div>
+<button class="primary" id="refresh">World Bank 데이터 새로고침</button><button id="csv">현재 표 CSV</button><button id="print">인쇄 / PDF 저장</button><span class="status" id="status" role="status">데이터를 불러오는 중…</span>
+</section>
+<nav class="tabs" id="tabs" aria-label="국가 그룹"></nav><p class="cluster-note" id="clusterNote"></p>
+<section class="stats">
+<div class="stat"><div class="label">선택 국가</div><div class="value" id="countryCount">—</div><div class="sub">그룹 내 국가 수</div></div>
+<div class="stat"><div class="label">한국 1인당 GDP</div><div class="value" id="koreaValue">—</div><div class="sub" id="koreaSub">선택 연도 기준</div></div>
+<div class="stat"><div class="label">그룹 평균</div><div class="value" id="groupAverage">—</div><div class="sub" id="groupAverageSub">선택 지표 기준</div></div>
+<div class="stat"><div class="label">한국 10년 CAGR</div><div class="value" id="koreaCagr">—</div><div class="sub">실질 1인당 GDP 기준</div></div>
+</section>
+<section class="grid">
+<div class="panel"><h2>국가별 연간 추세</h2><p class="desc" id="chartDesc">World Bank 연간 시계열</p><div class="chartbox"><canvas id="trend"></canvas></div></div>
+<div class="panel"><h2>장기 성장률 비교</h2><p class="desc">실질 1인당 GDP 기준 CAGR · 기간별 복리 연평균 성장률</p><div class="tablewrap"><table id="cagrTable"></table></div></div>
+</section>
+<section class="grid">
+<div class="panel"><h2>선택 연도 국가 비교</h2><p class="desc">선택한 그룹의 국가별 값</p><div class="tablewrap"><table id="compareTable"></table></div></div>
+<div class="panel"><h2>명목 1인당 GDP 상위 10개국</h2><p class="desc">선택 연도 기준 · 한국이 10위 밖이면 한국도 표시</p><div class="tablewrap"><table id="topTable"></table></div></div>
+</section>
+<section class="panel"><h2>예측 및 해석 참고자료</h2><p class="desc">World Bank 지표는 과거 관측치입니다. 아래 전망 기관 자료는 별도 발표·추정치이며, 이 대시보드의 과거 데이터와 혼용하지 마세요.</p><div class="sourcegrid">
+<div class="source"><a href="https://www.imf.org/en/Publications/WEO" target="_blank" rel="noopener">IMF — World Economic Outlook</a><p>국가별 거시경제 전망 및 실질 성장률 전망.</p></div>
+<div class="source"><a href="https://www.worldbank.org/en/publication/global-economic-prospects" target="_blank" rel="noopener">World Bank — Global Economic Prospects</a><p>세계경제와 국가·지역별 성장 전망.</p></div>
+<div class="source"><a href="https://www.oecd.org/en/publications/oecd-economic-outlook.html" target="_blank" rel="noopener">OECD — Economic Outlook</a><p>OECD 회원국 및 주요국 경제전망.</p></div>
+</div></section>
+<p class="foot">출처: World Bank, World Development Indicators (WDI). 실질 GDP per capita는 NY.GDP.PCAP.KD, 실질 성장률은 NY.GDP.PCAP.KD.ZG, 명목 GDP per capita는 NY.GDP.PCAP.CD를 사용합니다. 결측치는 0으로 대체하지 않습니다. CAGR은 시작·종료 연도의 값이 양수이고 유효할 때만 계산합니다. 데이터 갱신 시각은 상단 상태에 표시됩니다.</p>
+</main>
+<script>
+const GROUPS=[
+{id:"main",name:"주요 경제국",note:"한국·미국·중국·일본과 주요 유럽 경제국을 비교합니다.",countries:["KOR","USA","CHN","FRA","DEU","GBR","JPN"]},
+{id:"asia",name:"인도·동남아",note:"인도와 동남아 주요 경제국의 소득 수준 및 추세를 비교합니다.",countries:["IND","VNM","IDN"]},
+{id:"hubs",name:"아시아 허브",note:"대만과 싱가포르의 1인당 소득 추세를 비교합니다.",countries:["TWN","SGP"]},
+{id:"pacific",name:"북미·오세아니아",note:"캐나다와 호주를 중심으로 선진 자원경제국을 비교합니다.",countries:["CAN","AUS"]},
+{id:"supply",name:"공급망 재편",note:"멕시코·태국·말레이시아·폴란드의 공급망 및 생산거점 경제를 비교합니다.",countries:["MEX","THA","MYS","POL"]},
+{id:"resources",name:"원자재·에너지",note:"브라질·사우디아라비아·칠레의 자원 및 에너지 관련 경제를 비교합니다.",countries:["BRA","SAU","CHL"]},
+{id:"europe",name:"유럽 비교",note:"네덜란드·이탈리아·스페인의 유럽 내 소득 추세를 비교합니다.",countries:["NLD","ITA","ESP"]}
+];
+const IND={growth:"NY.GDP.PCAP.KD.ZG",real:"NY.GDP.PCAP.KD",nominal:"NY.GDP.PCAP.CD"};
+let data=null,active="main",chart=null;
+const $=id=>document.getElementById(id);
+const fmt=(v,dec=0)=>v==null||!Number.isFinite(v)?"—":v.toLocaleString("en-US",{maximumFractionDigits:dec,minimumFractionDigits:dec});
+const pct=(v)=>v==null||!Number.isFinite(v)?"—":(v>0?"+":"")+v.toFixed(2)+"%";
+function setStatus(s){$("status").textContent=s}
+async function fetchIndicator(code){let out=[],page=1,pages=1;do{const url="https://api.worldbank.org/v2/country/all/indicator/"+code+"?format=json&per_page=20000&page="+page;const r=await fetch(url);if(!r.ok)throw Error("World Bank API HTTP "+r.status);const j=await r.json();if(!Array.isArray(j)||!j[1])break;pages=Number(j[0].pages)||1;out=out.concat(j[1]);page++}while(page<=pages);return out}
+async function loadData(force=false){$("refresh").disabled=true;setStatus("World Bank 데이터 로딩 중…");try{let raw=null;if(!force){try{const r=await fetch("./data/gdp_per_capita.json?ts="+Date.now());if(r.ok)raw=await r.json()}catch(e){}}
+if(raw&&raw.indicators){data=raw}else{const entries=await Promise.all(Object.entries(IND).map(async([key,code])=>[key,await fetchIndicator(code)]));const countries={};for(const [key,rows] of entries){for(const r of rows){if(!r.countryiso3code||!r.date||r.value==null)continue;const c=r.countryiso3code;(countries[c]??={code:c,name:r.country?.value||c,region:r.country?.region?.id,values:{real:{},growth:{},nominal:{}}}).values[key][r.date]=Number(r.value)}}data={updated_at:new Date().toISOString(),indicators:IND,countries};}
+initUI();setStatus("업데이트: "+new Date(data.updated_at||Date.now()).toLocaleString("ko-KR"))}catch(e){console.error(e);setStatus("데이터 로드 실패: "+e.message);$("clusterNote").textContent="네트워크 또는 World Bank API 연결을 확인한 뒤 새로고침하세요."}finally{$("refresh").disabled=false}}
+function country(code){return data?.countries?.[code]}
+function years(){const all=new Set;Object.values(data.countries).forEach(c=>Object.keys(c.values.real||{}).forEach(y=>all.add(+y)));return [...all].sort((a,b)=>a-b)}
+function v(code,metric,year){const x=country(code)?.values?.[metric]?.[String(year)];return Number.isFinite(x)?x:null}
+function cagr(code,from,to){const a=v(code,"real",from),b=v(code,"real",to);if(!(a>0&&b>0&&to>from))return null;return (Math.pow(b/a,1/(to-from))-1)*100}
+function initUI(){const ys=years();const ysel=$("year"),old=+ysel.value||Math.max(...ys);ysel.innerHTML=ys.map(y=>'<option value="'+y+'">'+y+'</option>').join("");ysel.value=String(ys.includes(old)?old:Math.max(...ys));$("tabs").innerHTML=GROUPS.map(g=>'<button class="tab '+(g.id===active?'active':'')+'" data-group="'+g.id+'">'+g.name+'</button>').join("");$("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{active=b.dataset.group;initUI()});render()}
+function selected(){return GROUPS.find(g=>g.id===active)||GROUPS[0]}
+function render(){if(!data)return;const g=selected(),year=+$("year").value,metric=$("metric").value,start=+$("start").value;const codes=g.countries.filter(c=>country(c));$("clusterNote").textContent=g.note;$("countryCount").textContent=codes.length+"개";const ky=v("KOR",metric,year);$("koreaValue").textContent=metric==="growth"?pct(ky):fmt(ky)+" US$";$("koreaSub").textContent=year+"년 · "+({real:"실질 기준",growth:"실질 성장률",nominal:"명목 기준"}[metric]);const vals=codes.map(c=>v(c,metric,year)).filter(x=>x!=null);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;$("groupAverage").textContent=metric==="growth"?pct(avg):fmt(avg)+" US$";$("groupAverageSub").textContent=year+"년 유효 관측치 "+vals.length+"개";const allY=years();const last=allY.filter(y=>y<=year).slice(-1)[0];$("koreaCagr").textContent=pct(last?cagr("KOR",Math.max(+(last-10),Math.min(...allY)),last):null);$("chartDesc").textContent=({real:"실질 1인당 GDP · 2015년 불변 US$",growth:"실질 1인당 GDP 연간 성장률 · %",nominal:"명목 1인당 GDP · 현재 US$"})[metric]+" · "+start+"–"+year;
+renderChart(codes,metric,start,year);renderCagr(codes,year);renderCompare(codes,metric,year);renderTop(year)}
+function renderChart(codes,metric,start,end){const ys=years().filter(y=>y>=start&&y<=end);const colors=["#2563eb","#dc2626","#059669","#7c3aed","#d97706","#0891b2","#4b5563"];const datasets=codes.map((c,i)=>({label:country(c)?.name||c,data:ys.map(y=>v(c,metric,y)),borderColor:colors[i%colors.length],backgroundColor:colors[i%colors.length],borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.18,spanGaps:true}));if(chart)chart.destroy();chart=new Chart($("trend"),{type:"line",data:{labels:ys,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom",labels:{boxWidth:12,usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+": "+(metric==="growth"?pct(c.parsed.y):fmt(c.parsed.y)+" US$")}}},scales:{x:{title:{display:true,text:"연도"},ticks:{maxTicksLimit:12}},y:{title:{display:true,text:metric==="growth"?"%":"US$"},ticks:{callback:x=>Number(x).toLocaleString("en-US")}}}}})}
+function renderCagr(codes,end){const periods=[5,10,15,20,25,30],ys=years();const head='<thead><tr><th>국가</th>'+periods.map(p=>'<th>'+p+'년</th>').join("")+'</tr></thead>';const body=codes.map(c=>'<tr><td>'+country(c).name+'</td>'+periods.map(p=>{const from=end-p;if(!ys.includes(from)||!ys.includes(end))return '<td>—</td>';const x=cagr(c,from,end);return '<td class="'+(x>0?'positive':x<0?'negative':'')+'">'+pct(x)+'</td>'}).join("")+'</tr>').join("");$("cagrTable").innerHTML=head+'<tbody>'+body+'</tbody>'}
+function renderCompare(codes,metric,year){const sorted=codes.map(c=>({c,val:v(c,metric,year)})).sort((a,b)=>(b.val??-Infinity)-(a.val??-Infinity));$("compareTable").innerHTML='<thead><tr><th>국가</th><th>연도</th><th>값</th><th>전년 대비</th></tr></thead><tbody>'+sorted.map(o=>{const prev=v(o.c,metric,year-1),delta=o.val==null||prev==null?null:(metric==="growth"?o.val-prev:(o.val/prev-1)*100);return '<tr><td>'+country(o.c).name+'</td><td>'+year+'</td><td>'+ (metric==="growth"?pct(o.val):fmt(o.val)+" US$")+'</td><td class="'+(delta>0?'positive':delta<0?'negative':'')+'">'+(metric==="growth"?pct(delta):pct(delta))+'</td></tr>'}).join("")+'</tbody>'}
+function renderTop(year){const rows=Object.values(data.countries).filter(c=>c.region!=="NA"&&v(c.code,"nominal",year)!=null).sort((a,b)=>v(b.code,"nominal",year)-v(a.code,"nominal",year));const top=rows.slice(0,10);if(country("KOR")&&v("KOR","nominal",year)!=null&&!top.some(c=>c.code==="KOR"))top.push(country("KOR"));$("topTable").innerHTML='<thead><tr><th>순위</th><th>국가</th><th>명목 1인당 GDP (US$)</th></tr></thead><tbody>'+top.map(c=>'<tr><td>'+ (rows.findIndex(r=>r.code===c.code)+1)+'</td><td>'+c.name+(c.code==="KOR"?" · 한국":"")+'</td><td>'+fmt(v(c.code,"nominal",year))+'</td></tr>').join("")+'</tbody>'}
+function csv(){const year=+$("year").value,metric=$("metric").value,codes=selected().countries;const rows=[["Country","ISO3","Year","Indicator","Value"],...codes.map(c=>[country(c)?.name||c,c,year,IND[metric],v(c,metric,year)??""])];const text=rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+text],{type:"text/csv;charset=utf-8"}));a.download="gdp_per_capita_"+active+"_"+year+".csv";a.click();URL.revokeObjectURL(a.href)}
+$("year").addEventListener("change",render);$("metric").addEventListener("change",render);$("start").addEventListener("change",render);$("refresh").addEventListener("click",()=>loadData(true));$("csv").addEventListener("click",csv);$("print").addEventListener("click",()=>window.print());loadData();
+</script>
+</body></html>
